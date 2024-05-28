@@ -20,6 +20,34 @@ window.addEventListener("load", (event) => {
     }
 });
 
+var ATERM = undefined;
+var peer = new Peer({
+    /*config: {'iceServers': [ {
+      url: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+      }	]}, */'debug': 3 } )
+peer.on('open', function(id) {
+    console.log('My peer ID is: ' + id);
+});
+var EMU
+function connectServer() {
+	
+    var conn = peer.connect(prompt());
+    conn.on('open', function() {
+	console.log("open")
+	// Receive messages
+	EMU.onData = (data) => conn.send(data);
+	conn.on('data', function(data) {
+	    EMU.sendStringToNormal(data)
+	    ATERM.write(data)
+	    console.log(data)
+	});
+
+	// Send messages
+    });
+
+}
 
 var onExportToEditor = (bytes) => {
     var editorSpriteID = 0;
@@ -60,7 +88,7 @@ var IMPORTER = new Importer(document.getElementById("IDImportSpriteBTN"), onExpo
 
 // Show pop-up containing IDE changelog every time showChangelogVersion is increased
 // Update version string in index.html and play.html as well to match
-const showChangelogVersion = 25;
+const showChangelogVersion = 24;
 
 // This should match what is in /CoreThumbyFiles/lib/thumby.py as '__version__'
 window.latestThumbyLibraryVersion = 1.9;
@@ -425,6 +453,10 @@ document.getElementById("IDNewGameBTN").onclick = async (event) => {
 document.getElementById("IDDisconnectThumbyBTN").onclick = (event) =>{
     REPL.disconnect();
 }
+document.getElementById("CONNSERVER").onclick = (event) =>{
+    connectServer()
+}
+
 
 
 // Reset page by clearing storage and refreshing
@@ -726,7 +758,6 @@ document.getElementById("IDUpdateMicroPython").onclick = (event) => {
 
 
 // Terminal module
-var ATERM = undefined;
 function registerShell(_container, state){
     ATERM = new ActiveTerminal(_container, state);
     ATERM.onType = (data) => {
@@ -792,7 +823,6 @@ function registerShell(_container, state){
 
 
 
-var EMU;
 function registerEmulator(_container, state){
     EMU = new EMULATOR(_container, state, EDITORS);
     EMU.onData = (data) => ATERM.write(data, '\x1b[34m');
